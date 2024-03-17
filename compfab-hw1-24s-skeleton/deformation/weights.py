@@ -113,7 +113,7 @@ def bounded_biharmonic_weights(V: np.ndarray, T: np.ndarray, C: np.ndarray) -> n
     BE = np.zeros((0, 2), dtype=np.int64)
     CE = np.zeros((0, 2), dtype=np.int64)
     _, b, bc = igl.boundary_conditions(V, T.astype(np.int64), C.astype(np.double), P, BE, CE)  # type: ignore
-
+    # bc = bc / 2
     # print(V.shape)
     # print(T.shape)
     # print(b.shape)

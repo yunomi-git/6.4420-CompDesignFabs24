@@ -1,0 +1,51 @@
+[
+    {
+      "label": "LivingRoom",
+      "width": 16,
+      "height": 20,
+      "offsetx": 0,
+      "offsety": 0
+    },
+    {
+      "label": "Kitchen",
+      "width": 10,
+      "height": 12,
+      "offsetx": 16,
+      "offsety": 0
+    },
+    {
+      "label": "Bedroom",
+      "width": 12,
+      "height": 14,
+      "offsetx": 0,
+      "offsety": 20
+    },
+    {
+      "label": "Bathroom",
+      "width": 6,
+      "height": 8,
+      "offsetx": 12,
+      "offsety": 20
+    },
+    {
+      "label": "Closet",
+      "width": 4,
+      "height": 4,
+      "offsetx": 18,
+      "offsety": 20
+    },
+    {
+      "label": "Passageway",
+      "width": 4,
+      "height": 16,
+      "offsetx": 22,
+      "offsety": 0
+    },
+    {
+      "label": "LaundryRoom",
+      "width": 6,
+      "height": 6,
+      "offsetx": 26,
+      "offsety": 0
+    }
+  ]

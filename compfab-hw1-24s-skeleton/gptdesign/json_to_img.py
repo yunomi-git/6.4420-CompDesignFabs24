@@ -30,7 +30,7 @@ COLORS = {
 }
 
 
-@typechecked
+# @typechecked
 def draw_room(dwg: Drawing, room: Room) -> None:
     """Helper function to draw each room."""
     room_color = COLORS.get(room["label"], "white")
@@ -74,7 +74,7 @@ def draw_room(dwg: Drawing, room: Room) -> None:
     )
 
 
-@typechecked
+# @typechecked
 def draw_border(dwg: Drawing, room: Room) -> None:
     """Helper function to draw each room."""
     stroke_color = COLORS.get(room["label"], "black")
