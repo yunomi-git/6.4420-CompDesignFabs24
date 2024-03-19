@@ -11,8 +11,8 @@ import numpy as np
 
 
 # Root folder
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+# ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # Cube size
 cube_size = 0.025
 
@@ -98,6 +98,10 @@ def test_fem(mesh: TetMesh, material: Material, external_force: array, name: str
                 f.write(f'{row_str}\n')
 
         print(f"Stiffness matrix saved to '{stiffness_matrix_file_name}'")
+        # K_solution = np.loadtxt(ROOT_DIR + "/data/assignment2/std/" + "K_4x2x2_linear.txt")
+        # error = np.asarray(K / K_solution)
+        # error[np.where(np.isnan(error))] = 0
+        # print(error)
 
     # Construct and save the deformed mesh
     mesh_deform = TetMesh(V + U, mesh.elements)
@@ -143,7 +147,7 @@ def boundary_conditions_custom(vertices: array, tolerance: float=1e-8) -> Tuple[
     #       `(V[:, 0] < t1 + tolerance) & (V[:, 1] >= t2 - tolerance)`
     #     generates a Boolean mask for vertices whose X coordinates are smaller than t1 and whose
     #     Y coordinates are no less than t2 (both with some tolerance).
-    bc = np.zeros(V.shape[0], dtype=bool)   # <--
+    bc = V[:, 1] < bbox_size[1] * 0.1   # <--
 
     # Set the external forces
     # --------
@@ -151,9 +155,11 @@ def boundary_conditions_custom(vertices: array, tolerance: float=1e-8) -> Tuple[
     # HINT:
     #   - Like the previous blank, you will compute a Boolean mask for the vertices to exert forces
     #     at. You could also read the `boundary_condition` function for reference.
-    f_ext_mask = np.zeros(V.shape[0], dtype=bool)   # <--
+    f_ext_mask = (V[:, 2] < bbox_size[2] * 0.4) & (V[:, 1] > bbox_size[1] * 0.6)   # <--
     f_ext = np.zeros_like(V)
-    f_ext[f_ext_mask] = [0, 0, 0]       # <--
+    f_ext[f_ext_mask] = np.stack((-90 * np.sign(bbox_size[0]/2 - V[:,0]),
+                                  np.zeros(len(V)),
+                                  40 * np.ones(len(V)))).T[f_ext_mask]       # <--
 
     print(f'Boundary conditions: {bc.sum()} fixed points, {f_ext_mask.sum()} external forces')
 
