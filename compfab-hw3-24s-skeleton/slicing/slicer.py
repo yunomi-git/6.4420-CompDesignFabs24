@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import time
 import trimesh
@@ -5,11 +7,13 @@ from trimesh import Trimesh
 from typing import NamedTuple
 from pathlib import Path
 from typeguard import typechecked
+from tqdm import tqdm
 import fire
 
 from intersection import triangle_plane_intersection, dist_squared
 from gcode import convert_to_gcode, write_contours
-
+from VertexMap import VertexPath, VertexMap, EdgeDictionary
+import VertexMap as vm
 
 @typechecked
 def slice_to_gcode(stl_in: str, gcode_out: str, dz: float) -> list[list[list[np.ndarray]]]:
@@ -157,10 +161,83 @@ def create_contours(intersection_edges: list[list[Edge]]) -> list[list[list[np.n
     """
     layers: list[list[list[np.ndarray]]] = []
 
-    for i, layer in enumerate(intersection_edges):
+    for i, layer in enumerate(tqdm(intersection_edges)):
         # TODO: Your code here.
         #       Build potentially many contours out of a single layer by connecting edges.
+        # First hold the edges in dictionary format
+        # vm.plot_edges(layer)
+        all_edges = EdgeDictionary(layer)
+        def get_contours_from_vertex(vertex, contours_list, visited_vertices, prior_path: VertexPath | None = None, last_vertex=None):
+            # print("---")
+            # print("Searching for contours")
+            # print("Seed Vertex", vertex)
+            # print("Prior vertex", last_vertex)
+            # Find contours starting from the vertex.
+            # Appends the contours to the path
+            if prior_path is None:
+                current_path = VertexPath(vertex)
+            else:
+                current_path = vm.copy_path(prior_path)
+
+            visited_vertices.append(vertex)
+            cur_vertex = vertex
+            next_vertices = all_edges.get_connected_vertices(cur_vertex, exclude_vertex=last_vertex)
+            while True:
+                # End condition: Dead end
+                if len(next_vertices) == 0:
+                    break
+
+                elif len(next_vertices) == 1:
+                    next_vertex = next_vertices[0]
+                    # End condition: path has made a loop
+                    if current_path.vertex_is_in_list(next_vertex):
+                        # print("End detected. Contour:")
+                        # Cut off the path at the vertex
+                        contour = current_path.construct_path_from_vertex(next_vertex)
+                        # print(contour)
+                        contours_list.append(contour)
+                        break
+                    else:
+                        # print("Adding vertex to path:", next_vertex)
+                        current_path.add_vertex(next_vertex)
+                        last_vertex = cur_vertex
+                        cur_vertex = next_vertex
+                        visited_vertices.append(cur_vertex)
+                        next_vertices = all_edges.get_connected_vertices(cur_vertex, exclude_vertex=last_vertex)
+                else: # End condition: reach a split. start a new search
+                    # print("Split detected: ")
+                    # for next_vertex in next_vertices:
+                        # print(next_vertex)
+                    for next_vertex in next_vertices:
+                        # print("\tLooking at split from", next_vertex)
+                        # For each next vertex, continue search
+                        if current_path.vertex_is_in_list(next_vertex):
+                            # print("End detected. Contour:")
+                            # Cut off the path at the vertex
+                            contour = current_path.construct_path_from_vertex(next_vertex)
+                            # print(contour)
+                            contours_list.append(contour)
+                        else:
+                            current_path.add_vertex(next_vertex)
+                            get_contours_from_vertex(next_vertex, contours_list, visited_vertices, current_path, last_vertex=cur_vertex)
+                    break
+
         contours: list[list[np.ndarray]] = []
+        while all_edges.is_not_empty():
+            visited_vertices = []
+            vertex = all_edges.get_first_vertex_key()
+            # print("Beginning new search from vertex", vertex)
+            # print("Length of dictionary", len(all_edges.vertex_map))
+            contours_from_vertex = []
+            get_contours_from_vertex(vertex, contours_from_vertex, visited_vertices)
+
+            # remove all vertices that have been collected
+            for vertex in visited_vertices:
+                all_edges.remove_vertex(vertex)
+
+            # Save to master list
+            contours += contours_from_vertex
+
         layers.append(contours)
 
     return layers
@@ -180,4 +257,5 @@ def main(model_name: str, slice_height: float = 0.4):
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    main("tyra")
+    # fire.Fire(main)

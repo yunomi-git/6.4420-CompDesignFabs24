@@ -10,6 +10,7 @@ dependencies:
   - flask
   - pip:
     - trimesh
+    - tqdm
     - scikit-image
     - tetgen
     - flask-cors
