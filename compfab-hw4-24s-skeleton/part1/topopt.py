@@ -1,3 +1,4 @@
+import scipy.signal
 from scipy.signal import convolve2d
 from PIL import Image
 
@@ -283,7 +284,7 @@ class TopologyOptimization:
             #   d' = d * sqrt(sensitivity / lambda)
             # --------
             # TODO: Your code here
-            d_new = d       # <--
+            d_new = d * np.sqrt(s / m)      # <--
 
             # Clamp the new density values within the change limit
             # --------
@@ -293,26 +294,25 @@ class TopologyOptimization:
             # where `lb` and `ub` can be scalars or arrays. If they are arrays, their shapes should
             # match the shape of `x` exactly or within the broadcasting range (you don't have to
             # consider broadcasting here, though).
-            d_new = d_new       # <--
+            d_new = np.clip(d_new, d - change_limit, d + change_limit)       # <--
 
             # Clamp the new density values within the valid density range
             d_new = np.clip(d_new, 1e-2, 1.0)
-
             # Halve the search interval according to the current total volume
             # --------
             # TODO: Your code here. Fill in the condition and two branches.
             # HINT: Think about this question - if the total volume under the current lambda is
             # smaller than the target volume, should we increase or decrease lambda?
-            if True:        # <--
-                r = 0.0     # <--
+            if np.mean(d_new) < fraction:        # <--
+                r = m     # <--
             else:
-                l = 0.0     # <--
+                l = m     # <--
 
         # Update the density field using the new-found lambda (`l` rather than `m`)
         # --------
         # TODO: Your code here. Apply your solution from the lines above.
-        d_new = d           # <--
-        d_new = d_new       # <--
+        d_new = d * np.sqrt(s / l)           # <--
+        d_new = np.clip(d_new, d_new - change_limit, d_new + change_limit)        # <--
         d_new = np.clip(d_new, 1e-2, 1.0)
         self.density[:] = d_new
 
@@ -373,8 +373,8 @@ class TopologyOptimization:
         ci, cj = w_size // 2, w_size // 2
         for i in range(w_size):
             for j in range(w_size):
-                dist = 0.0          # <--
-                w[i, j] = 0.0       # <--
+                dist = np.sqrt((ci - i)**2 + (cj - j)**2)         # <--
+                w[i, j] = np.max([0, radius - dist])       # <--
 
         # Compute convolution for the denominator
         # -------
@@ -383,17 +383,17 @@ class TopologyOptimization:
         #   a_conv = convolve2d(a, kernel, mode='same')
         # setting `mode='same'` adds zero padding and makes sure the returned array has the same
         # shape as the input array.
-        d_conv = d      # <--
+        d_conv = scipy.signal.convolve2d(d, w, mode='same')      # <--
 
         # Compute convolution for the numerator
         # --------
         # TODO: Your code here.
-        ds_conv = d     # <--
+        ds_conv = scipy.signal.convolve2d(d * s, w, mode='same')     # <--
 
         # Compute filtered sensitivities
         # --------
         # TODO: Your code here.
-        s_filtered = s      # <--
+        s_filtered = ds_conv / d_conv      # <--
 
         return s_filtered
 
@@ -491,7 +491,9 @@ def main():
     opt.run(args.fraction, args.penalty, args.radius, change_limit=args.change_limit)
 
     # Create the result folder
-    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    # ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+    print(ROOT_DIR)
     result_dir = os.path.join(ROOT_DIR, 'data', 'assignment5', 'results', 'part1')
     os.makedirs(result_dir, mode=0o775, exist_ok=True)
 
