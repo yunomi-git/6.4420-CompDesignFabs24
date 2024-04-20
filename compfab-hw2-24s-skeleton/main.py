@@ -54,7 +54,7 @@ def boundary_conditions(vertices: array, external_force: array,
     return f_ext, bc
 
 
-def test_fem(mesh: TetMesh, material: Material, external_force: array, name: str):
+def fem_test(mesh: TetMesh, material: Material, external_force: array, name: str):
     '''
     Default FEM test function.
     '''
@@ -166,7 +166,7 @@ def boundary_conditions_custom(vertices: array, tolerance: float=1e-8) -> Tuple[
     return f_ext, bc
 
 
-def test_fem_custom(mesh: TetMesh, material: Material, name: str):
+def fem_custom_test(mesh: TetMesh, material: Material, name: str):
     '''
     Customized FEM test function.
     '''
@@ -230,7 +230,7 @@ def main():
         tet_mesh = tet_mesh_from_file(file_name, max_size=cube_size * 10)
 
         # Test deformation using the specified mesh
-        test_fem_custom(tet_mesh, neohookean_material, mesh_name)
+        fem_custom_test(tet_mesh, neohookean_material, mesh_name)
 
     # Use a custom cuboid size
     elif test_cuboid_size:
@@ -242,7 +242,7 @@ def main():
 
         # Test both linear and non-linear materials
         for material in (linear_material, neohookean_material):
-            test_fem(tet_mesh, material, test_force, test_cuboid_size)
+            fem_test(tet_mesh, material, test_force, test_cuboid_size)
 
     # Perform default testing with cuboids
     else:
@@ -257,7 +257,7 @@ def main():
 
                 # Test deformation using the cuboid mesh
                 test_name = f'{nx}x{ny}x{nz}'
-                test_fem(tet_mesh, material, test_force, test_name)
+                fem_test(tet_mesh, material, test_force, test_name)
 
 
 if __name__ == '__main__':
